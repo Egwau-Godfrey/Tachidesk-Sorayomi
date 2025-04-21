@@ -1,0 +1,48 @@
+name: Build Unsigned IPA
+
+on:
+  workflow_dispatch:  # Allows manual triggering
+
+env:
+  pkg_name: Sorayomi
+
+jobs:
+  build-ipa:
+    name: Build iOS IPA
+    runs-on: macos-latest  # iOS builds require macOS
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+
+      - name: Install dependencies
+        run: |
+          flutter pub get
+          flutter gen-l10n
+          dart run build_runner build --delete-conflicting-outputs
+
+      - name: Build iOS (no codesign)
+        run: flutter build ios --release --no-codesign
+
+      - name: Package IPA
+        working-directory: build/ios/iphoneos
+        run: |
+          # Create IPA structure
+          mkdir Payload
+          cp -r Runner.app Payload/  # Copy app bundle into Payload
+          
+          # Zip into IPA format
+          zip -r app-release.ipa Payload
+          
+          # Move to workspace root
+          mv app-release.ipa "$GITHUB_WORKSPACE/${{ env.pkg_name }}-unsigned.ipa"
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: unsigned-ipa
+          path: ${{ env.pkg_name }}-unsigned.ipa
