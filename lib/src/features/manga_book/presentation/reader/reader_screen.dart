@@ -106,7 +106,7 @@ class ReaderScreen extends HookConsumerWidget {
       },
       child: ScrollConfiguration(
         behavior: ScrollConfiguration.of(context).copyWith(scrollbars: false),
-        child: SafeArea(
+        child: Container(
           child: manga.showUiWhenData(
             context,
             (data) {
